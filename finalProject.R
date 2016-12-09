@@ -21,11 +21,3 @@ dataTrain$summary <- summaryVec
 
 write.csv(x=dataTrain, file="movie_metadata_summary.csv", row.names = FALSE)
 
-#####SCRAPING REVIEW #### not working!
-dataTrain <- read.csv("movie_metadata_summary.csv", stringsAsFactors = FALSE)
-dataTrainOmit <- na.omit(dataTrain)
-# weblink <- dataTrain$movie_imdb_link[2]
-# rawpage <- read_html("http://www.imdb.com/title/tt0449088/?ref_=fn_tt_tt_1")
-# reviewNode <- html_nodes(x= rawpage, xpath = '//*[@id="tn15content"]/div[36]/p[2]')
-# 
-# html_text(reviewNode)

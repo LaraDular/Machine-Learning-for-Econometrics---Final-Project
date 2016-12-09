@@ -54,6 +54,11 @@ $$
 
 where $\mathbf{W}'_{(\cdot,j)} = \mathbf{v}'_{w_j}$.
 
+<font color="red">
+**Vlad's comment:**  very nice explanation! additionally , you could discuss about negative sampling and hierarchical softmax
+
+My explanatio above already exceeds the limiation 600 words. Not by much but it does. I'll wirte him an email asking (1) if it's ok to use what's already writen (2) should we exceed the limitation and explain further or leave it as is.
+</font>
 
 #LDA
 
