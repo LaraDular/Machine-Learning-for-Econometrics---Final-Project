@@ -1,0 +1,68 @@
+---
+title: "Final Project"
+author: "Lara Dular and Indgrid de Waal"
+date: "December 9, 2016"
+output: html_document
+---
+#Introduction: motivation for the dataset and indication of the characteristics.
+
+#Word2Vec
+
+The goal of Word2Vec is to mine text files (corpus) into a mathematical model that is understandable to a computer, while still preserving, or better yet, unraveling the context and relation between words. The mathematical model behind theWord2Vec is a high dimensional vector space ($\mathbb{R}^N$) where words are represented by $N$-dimensional vectors. The distances between words that share the common context should be small. The model is very good at answering analogy questions of the form: “Paris” is to “France” as “Amsterdam” is to ?.
+
+Word2Vec is a shallow neural net with a single hidden layer. There are two ways of training the word2vec neural net, by choosing one of two models: The Continuous-Bag-of-Words model (CBOW) or the Skip-Gram model (SG). The models are very similar and are basically mirror images of one another -- CBOW predicts a target word (output) from source context words (input layer), while the SG does the inverse and predicts context words (output layer) of the input word (input layer). The output of both models is the projection matrix, which is a by-product of the neural network. 
+
+The structure of the neural net differs based on the model chosen. Let’s first focus on the SG model. Let $V$ denote the number of words in vocabulary. The vocabulary is built automatically from unique words in the corpus. To control the size of vocabulary it is useful to set the minimum frequency of words occurrences. The input layer has as many neurons as there are words in the vocabulary.  As mentioned, the SG model's input is a single word, meaning that the input layer is actually a one-hot vector $\mathbf{x}$ of length $V$. To get from the input to the hidden layer we multiply $\mathbf{x}$ by a $V\times N$ dimensional weight matrix $\mathbf{W}$, where the $i$-th row of matrix $\mathbf{W}$ is an $N$-dimensional representation of word $w_i$, $i = 1,\ldots,V$. 
+Formally, $\mathbf{W}_{(i,\cdot)} = \mathbf{v}_{w_i}^\intercal$. Since $\mathbf{x}$ is a one-hot vector, we can assume, without loss of generality, that $\mathbf{x}$ is the $i$-th word in the vocabulary -- $x_i=1$ and $x_k=0,\ k\neq i$. Then we can calculate the hidden layer vector $\mathbf{h}$ as 
+$$\mathbf{h} = \mathbf{W}^\intercal\mathbf{x} = {\mathbf{v}_{w_i}}^\intercal$$
+meaning that the hidden layer corresponds to the $i$-th row of $\mathbf{W}$. This also implies that the hidden layer activation function is linear. The hidden layer is $N$-dimensional representation (word vector) of word $w_i$. 
+
+Now we need to get from the hidden layer to the output layer. To do so, we first multiply the $N$ dimensional vector $\mathbf{h}$ by a $N \times V$ dimensional weight matrix $\mathbf{W}'$. Similarly as before, the $j$-th column of matrix $\mathbf{W}'$ is an $N$-dimensional representation of word $w_j$ -- formally, $\mathbf{W}'_{(\cdot,j)} = \mathbf{v}'_{w_j}$. Since we wish to have an output compounded out of $C$ context words, we have to give as an output $C$ multinomial distributions of length $V$ -- one for each of the context words. To make the calculations more clear, we denote $C=2n$, so the context of the word $w_i$ are words $w_{-n+i},w_{i-n+1},\ldots w_{i-1},w_{i+1},\ldots w_{i+n-1}+w_{i+n}$. The $C$ score vectors $u_{w_{i-n}},\ldots u_{w_{i-1}},u_{w_{i+1}},\ldots u_{w_{i+n}}$ are all replicas of vector
+
+$$
+u = \mathbf{W' h},
+$$ 
+where the $j-th$ component equals 
+$$u_j = {\mathbf{v'}_{w_j}}^\intercal \mathbf{h} = {\mathbf{v'}_{w_j}}^\intercal {\mathbf{v}_{w_i}}^\intercal.$$ 
+
+Since the goal is produce probabilities that context words $w_{-n+i},w_{i-n+1},\ldots w_{i-1},w_{i+1},\ldots w_{i+n-1}+w_{i+n}$ appear in the context of $w_i$, we transform each of the scores using softmax activation function (or normalized exponential function) in the following way
+
+$$
+p(w_{i+j}|w_i) = \frac{\exp({\mathbf{v'}_{w_{i+j}}}^\intercal\mathbf{h}) }{\sum_{j'=1}^V \exp({\mathbf{v'}_{w_{j'}}}^\intercal\mathbf{h})},\ j\in \{-n,\ldots,-1,1,\ldots n\}.
+$$
+
+At this point the calculations need to be evaluated, so an apropriate objective function need to be constructed. In this case we wish to minimize the loss function
+
+$$
+E= - \ln p(w_{i-n},\ldots w_{i-1},w_{i+1}\ldots w_{i+n}|w_i)\\
+= -\ln \prod_{j=-n,\ j\neq 0}^n p(w_{i+j}|w_i)\\
+= -\sum_{j=-n,\ j\neq 0}^n {\mathbf{v'}_{w_{i+j}}}^\intercal\mathbf{h} +2n\ln\sum_{j'=1}^V \exp({\mathbf{v'}_{w_{j'}}}^\intercal\mathbf{h})  
+$$
+
+By calculating the derivatives of E w.r.t. the unknown parameters we obtain the prediction errors. The prediction errors are then summed up over all context words. The weights are then adjusted accordingly trough backpropagation. These steps are run multiple times before we get the output.
+
+In the initialization step (before the training begins) matrices $\mathbf{W}$ and $\mathbf{W'}$ are initialized to small random values.
+
+Now we turn our attention to the CBOW model. Let $C$ denote the number of context words and $V$ represent the number of words in vocabulary. Each of the $C$ words is represented as a one-hot vector $\mathbf{x}_{k},\ k=1,\ldots C,$ of length $V$. As an input we therefore have $C$ one-hot vectors. We multiply each of the $\mathbf{x}_1,\ldots, \mathbf{x_C}$ with an $V \times N$ dimensional weight matrix $\mathbf{W}$, where the $i$-th row of the matrix represents $N$-dimensional representation of word $w_i$, $i = 1,\ldots,V$ -- formally, $\mathbf{W}_{i,\cdot} = \mathbf{v}_{w_i}^\intercal$. In the next step an average of the vectors is taken in order to get the $N$ dimensional hidden layer $\mathbf{h}$
+$$\mathbf{h}=\frac{1}{C} W^\intercal (\mathbf{x}_1+\ldots+\mathbf{x}_C).$$ 
+
+This again implies that the hidden layer activation function is linear. The following steps are simmilar to those in SG model with the destinction that one vector is produced using the stepmax activation function 
+
+$$
+p(w_i|w_1,\ldots w_C) = \frac{\exp({\mathbf{v'}_{w_j}}^\intercal \mathbf{h})}{\sum_{j'=1}^V \exp({\mathbf{v'}_{w_{j'}}}^\intercal \mathbf{h})},
+$$
+
+where $\mathbf{W}'_{(\cdot,j)} = \mathbf{v}'_{w_j}$.
+
+
+#LDA
+
+
+#Experiments.
+
+#Results including a discussion comparing the results of LDA and Word2Vec.
+
+#Conclusions.
+
+
+##Contribution of each member.
