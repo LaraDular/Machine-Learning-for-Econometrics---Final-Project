@@ -65,6 +65,25 @@ My explanatio above already exceeds the limiation 600 words. Not by much but it 
 
 #Experiments.
 
+<font color="red">
+**IDEA 1:**  
+
+- First construct a model that perdicts IMDB rate without discription
+- Second construct a model that will include description
+- Compare the two models. What is the added value of adding a description? Maybe even construct just a model with the description
+</font>
+
+
+<font color="red">
+**IDEA 2:**
+Add a new categorical variable, one of to options is possible:
+
+- the gross is more than the budget doubled
+- the gross is more than the budget i.e. there was no loss
+
+Check if we can predict this variable using the plot summaries.
+</font>
+
 #Results including a discussion comparing the results of LDA and Word2Vec.
 
 #Conclusions.
