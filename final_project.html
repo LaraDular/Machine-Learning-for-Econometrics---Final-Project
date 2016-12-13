@@ -123,11 +123,14 @@ $(document).ready(function () {
 </div>
 
 
-<div id="introduction-motivation-for-the-dataset-and-indication-of-the-characteristics." class="section level1">
-<h1>Introduction: motivation for the dataset and indication of the characteristics.</h1>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p><font color="red"> Insert sections from the ready-made file for suggesting the final project. Explain the variables in detail </font></p>
 </div>
 <div id="word2vec" class="section level1">
-<h1>Word2Vec</h1>
+<h1>1. Word2Vec</h1>
+<p><font color="red"> <strong>Vlad’s comment:</strong> very nice explanation! additionally , you could discuss about negative sampling and hierarchical softmax</p>
+<p>My explanatio above already exceeds the limiation 600 words. Not by much but it does. I’ll wirte him an email asking (1) if it’s ok to use what’s already writen (2) should we exceed the limitation and explain further or leave it as is. </font></p>
 <p>The goal of Word2Vec is to mine text files (corpus) into a mathematical model that is understandable to a computer, while still preserving, or better yet, unraveling the context and relation between words. The mathematical model behind theWord2Vec is a high dimensional vector space (<span class="math inline">\(\mathbb{R}^N\)</span>) where words are represented by <span class="math inline">\(N\)</span>-dimensional vectors. The distances between words that share the common context should be small. The model is very good at answering analogy questions of the form: “Paris” is to “France” as “Amsterdam” is to ?.</p>
 <p>Word2Vec is a shallow neural net with a single hidden layer. There are two ways of training the word2vec neural net, by choosing one of two models: The Continuous-Bag-of-Words model (CBOW) or the Skip-Gram model (SG). The models are very similar and are basically mirror images of one another – CBOW predicts a target word (output) from source context words (input layer), while the SG does the inverse and predicts context words (output layer) of the input word (input layer). The output of both models is the projection matrix, which is a by-product of the neural network.</p>
 <p>The structure of the neural net differs based on the model chosen. Let’s first focus on the SG model. Let <span class="math inline">\(V\)</span> denote the number of words in vocabulary. The vocabulary is built automatically from unique words in the corpus. To control the size of vocabulary it is useful to set the minimum frequency of words occurrences. The input layer has as many neurons as there are words in the vocabulary. As mentioned, the SG model’s input is a single word, meaning that the input layer is actually a one-hot vector <span class="math inline">\(\mathbf{x}\)</span> of length <span class="math inline">\(V\)</span>. To get from the input to the hidden layer we multiply <span class="math inline">\(\mathbf{x}\)</span> by a <span class="math inline">\(V\times N\)</span> dimensional weight matrix <span class="math inline">\(\mathbf{W}\)</span>, where the <span class="math inline">\(i\)</span>-th row of matrix <span class="math inline">\(\mathbf{W}\)</span> is an <span class="math inline">\(N\)</span>-dimensional representation of word <span class="math inline">\(w_i\)</span>, <span class="math inline">\(i = 1,\ldots,V\)</span>. Formally, <span class="math inline">\(\mathbf{W}_{(i,\cdot)} = \mathbf{v}_{w_i}^\intercal\)</span>. Since <span class="math inline">\(\mathbf{x}\)</span> is a one-hot vector, we can assume, without loss of generality, that <span class="math inline">\(\mathbf{x}\)</span> is the <span class="math inline">\(i\)</span>-th word in the vocabulary – <span class="math inline">\(x_i=1\)</span> and <span class="math inline">\(x_k=0,\ k\neq i\)</span>. Then we can calculate the hidden layer vector <span class="math inline">\(\mathbf{h}\)</span> as <span class="math display">\[\mathbf{h} = \mathbf{W}^\intercal\mathbf{x} = {\mathbf{v}_{w_i}}^\intercal\]</span> meaning that the hidden layer corresponds to the <span class="math inline">\(i\)</span>-th row of <span class="math inline">\(\mathbf{W}\)</span>. This also implies that the hidden layer activation function is linear. The hidden layer is <span class="math inline">\(N\)</span>-dimensional representation (word vector) of word <span class="math inline">\(w_i\)</span>.</p>
@@ -153,14 +156,78 @@ E= - \ln p(w_{i-n},\ldots w_{i-1},w_{i+1}\ldots w_{i+n}|w_i)\\
 p(w_i|w_1,\ldots w_C) = \frac{\exp({\mathbf{v'}_{w_j}}^\intercal \mathbf{h})}{\sum_{j'=1}^V \exp({\mathbf{v'}_{w_{j'}}}^\intercal \mathbf{h})},
 \]</span></p>
 <p>where <span class="math inline">\(\mathbf{W}'_{(\cdot,j)} = \mathbf{v}'_{w_j}\)</span>.</p>
-<p><font color="red"> <strong>Vlad’s comment:</strong> very nice explanation! additionally , you could discuss about negative sampling and hierarchical softmax</p>
-<p>My explanatio above already exceeds the limiation 600 words. Not by much but it does. I’ll wirte him an email asking (1) if it’s ok to use what’s already writen (2) should we exceed the limitation and explain further or leave it as is. </font></p>
 </div>
 <div id="lda" class="section level1">
-<h1>LDA</h1>
+<h1>2. LDA</h1>
 </div>
-<div id="experiments." class="section level1">
-<h1>Experiments.</h1>
+<div id="experiments" class="section level1">
+<h1>3. Experiments</h1>
+<div id="acquiring-data-with-web-scraping" class="section level2">
+<h2>3.1. Acquiring data with web scraping</h2>
+<p>Since the data described above didn’t include any text data, we scraped IMDB page to get summaries of the movie plots in our data set. Since our data set includes the weblink of each movie, the scraping was fairly easy. With the use of regular expressions, the ID of the movie was taken form the link as to create a link to the summary page. Then, summary of the plot can be aquired usint the appropriate xpath.</p>
+<pre class="r"><code>#import data
+dataTrain &lt;- read.csv(&quot;movie_metadata.csv&quot;, stringsAsFactors = FALSE)
+library(stringr) #regular expr.
+library(rvest)   #html extraction
+library(pryr)</code></pre>
+<pre class="r"><code>#SCRAPE 
+summary &lt;- sapply(X=dataTrain$movie_imdb_link, function(weblink){
+  #Extract the title and number
+  title &lt;- str_extract(pattern = &quot;/title/tt[0-9]*/&quot;,string=weblink)
+  weblinkPlot &lt;- paste0(&quot;https://www.imdb.com&quot;,title,&quot;plotsummary&quot;)
+  rawpage &lt;- read_html(weblinkPlot)
+
+  summaryNode &lt;- html_nodes(x=rawpage, xpath =&quot;(//ul[@class = 'zebraList']/li[@class='odd']/p[@class='plotSummary'])[1]&quot;)
+  return(html_text(summaryNode))
+})
+
+summaryVec &lt;- sapply(summary,FUN = function(t){if(length(t)==0){&quot;&quot;}else{t}})
+dataTrain$summary &lt;- summaryVec
+
+#write on disc
+write.csv(x=dataTrain, file=&quot;movie_metadata_summary.csv&quot;, row.names = FALSE)</code></pre>
+</div>
+<div id="preprocessing" class="section level2">
+<h2>3.2. Preprocessing</h2>
+<p>Once the data was collected we had to preprocess it. The summaries wer collected into a corpora. With the use of package <code>tm</code> punctuations, numbers, stop words and additional white space were removed. We considered if the documents should be stemmed or not and have decided to do so as to make the data denser. Finally, we can write each preprocessed document on disk.</p>
+<pre class="r"><code>library(tm) #For text mining
+library(SnowballC) #For text mining
+
+#Import data 
+dataAll &lt;- read.csv(&quot;movie_metadata_summary.csv&quot;)
+#Remove the annoying letter form the titles (not necesairy but its visualy nicer :) )
+dataAll$movie_title &lt;- gsub(pattern = &quot;Â&quot;,replacement = &quot;&quot;,x = dataAll$movie_title, fixed = T)
+
+
+#Create a corpus of the summaries and preprocess  
+corpusSum &lt;- VCorpus(VectorSource(dataAll$summary) ,readerControl = list(language = &quot;en&quot;, reader = readPlain))
+as.character(corpusSum[[1]])  #print the first summary
+
+###PREPROCESS###
+#remove punctuations
+corpusSum &lt;- tm_map(corpusSum, removePunctuation)
+#and numbers
+corpusSum &lt;- tm_map(corpusSum, removeNumbers)
+#and transform the comments to lowercase (we don't want the destinction between lower and upper case strings)
+corpusSum &lt;- tm_map(corpusSum, tolower)
+#remove english stopwords without analytic value e.g. and, such, as, so,...
+corpusSum &lt;- tm_map(corpusSum, removeWords, stopwords(&quot;english&quot;))
+#Strip additional spaces that might occur and seqeunces such as new line &quot;\n&quot;&quot; 
+corpusSum &lt;- tm_map(corpusSum, stripWhitespace)
+#stemming makes data denser, thus reducing the amount of data required for adequate training
+corpusSum &lt;- tm_map(corpusSum, stemDocument)
+#Converting reviews it in to plain text
+corpusSum &lt;- tm_map(corpusSum, PlainTextDocument)
+
+
+ 
+#Write the files on disk
+# 
+library(stringr) #for the line bellow
+ids &lt;- str_pad(1:length(corpusSum), 4, pad = &quot;0&quot;)
+writeCorpus(x = corpusSum
+            ,path = &quot;C:/Users/Lara/Documents/Faks201617/MachineLearn/Assignments/Final/Rep/data&quot;
+            ,filenames = sapply(ids, function(i) paste0(i,&quot;.txt&quot;), USE.NAMES = F))</code></pre>
 <p><font color="red"> <strong>IDEA 1:</strong></p>
 <ul>
 <li>First construct a model that perdicts IMDB rate without discription</li>
@@ -173,6 +240,7 @@ p(w_i|w_1,\ldots w_C) = \frac{\exp({\mathbf{v'}_{w_j}}^\intercal \mathbf{h})}{\s
 <li>the gross is more than the budget i.e. there was no loss</li>
 </ul>
 <p>Check if we can predict this variable using the plot summaries. </font></p>
+</div>
 </div>
 <div id="results-including-a-discussion-comparing-the-results-of-lda-and-word2vec." class="section level1">
 <h1>Results including a discussion comparing the results of LDA and Word2Vec.</h1>

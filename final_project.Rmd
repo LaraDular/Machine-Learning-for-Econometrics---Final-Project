@@ -4,9 +4,19 @@ author: "Lara Dular and Indgrid de Waal"
 date: "December 9, 2016"
 output: html_document
 ---
-#Introduction: motivation for the dataset and indication of the characteristics.
+#Introduction
 
-#Word2Vec
+<font color="red">
+Insert sections from the ready-made file for suggesting the final project. Explain the variables in detail
+</font>
+
+#1. Word2Vec
+
+<font color="red">
+**Vlad's comment:**  very nice explanation! additionally , you could discuss about negative sampling and hierarchical softmax
+
+My explanatio above already exceeds the limiation 600 words. Not by much but it does. I'll wirte him an email asking (1) if it's ok to use what's already writen (2) should we exceed the limitation and explain further or leave it as is.
+</font>
 
 The goal of Word2Vec is to mine text files (corpus) into a mathematical model that is understandable to a computer, while still preserving, or better yet, unraveling the context and relation between words. The mathematical model behind theWord2Vec is a high dimensional vector space ($\mathbb{R}^N$) where words are represented by $N$-dimensional vectors. The distances between words that share the common context should be small. The model is very good at answering analogy questions of the form: “Paris” is to “France” as “Amsterdam” is to ?.
 
@@ -54,16 +64,95 @@ $$
 
 where $\mathbf{W}'_{(\cdot,j)} = \mathbf{v}'_{w_j}$.
 
-<font color="red">
-**Vlad's comment:**  very nice explanation! additionally , you could discuss about negative sampling and hierarchical softmax
-
-My explanatio above already exceeds the limiation 600 words. Not by much but it does. I'll wirte him an email asking (1) if it's ok to use what's already writen (2) should we exceed the limitation and explain further or leave it as is.
-</font>
-
-#LDA
 
 
-#Experiments.
+#2. LDA
+
+
+#3. Experiments
+##3.1. Acquiring data with web scraping
+```{r, echo=FALSE, message=FALSE}
+setwd("C:/Users/Lara/Documents/Faks201617/MachineLearn/Assignments/Final/Rep") 
+```
+
+
+Since the data described above didn't include any text data, we scraped IMDB page to get summaries of the movie plots in our data set. Since our data set includes the weblink of each movie, the scraping was fairly easy. With the use of regular expressions, the ID of the movie was taken form the link as to create a link to the summary page. Then, summary of the plot can be aquired usint the appropriate xpath.
+
+```{r, message=FALSE}
+#import data
+dataTrain <- read.csv("movie_metadata.csv", stringsAsFactors = FALSE)
+library(stringr) #regular expr.
+library(rvest)   #html extraction
+library(pryr)
+```
+```{r, eval=F}
+
+
+#SCRAPE 
+summary <- sapply(X=dataTrain$movie_imdb_link, function(weblink){
+  #Extract the title and number
+  title <- str_extract(pattern = "/title/tt[0-9]*/",string=weblink)
+  weblinkPlot <- paste0("https://www.imdb.com",title,"plotsummary")
+  rawpage <- read_html(weblinkPlot)
+
+  summaryNode <- html_nodes(x=rawpage, xpath ="(//ul[@class = 'zebraList']/li[@class='odd']/p[@class='plotSummary'])[1]")
+  return(html_text(summaryNode))
+})
+
+summaryVec <- sapply(summary,FUN = function(t){if(length(t)==0){""}else{t}})
+dataTrain$summary <- summaryVec
+
+#write on disc
+write.csv(x=dataTrain, file="movie_metadata_summary.csv", row.names = FALSE)
+```
+
+##3.2. Preprocessing
+Once the data was collected we had to preprocess it. The summaries were collected into a corpora. With the use of package ```tm``` punctuations, numbers, stop words and additional white space were removed. We considered if the documents should be stemmed or not and have decided to do so as to make the data denser. Finally, we can write each preprocessed document on disk. 
+
+```{r, eval=FALSE}
+library(tm) #For text mining
+library(SnowballC) #For text mining
+
+#Import data 
+dataAll <- read.csv("movie_metadata_summary.csv")
+#Remove the annoying letter form the titles (not necesairy but its visualy nicer :) )
+dataAll$movie_title <- gsub(pattern = "Â",replacement = "",x = dataAll$movie_title, fixed = T)
+
+
+#Create a corpus of the summaries and preprocess  
+corpusSum <- VCorpus(VectorSource(dataAll$summary) ,readerControl = list(language = "en", reader = readPlain))
+as.character(corpusSum[[1]])  #print the first summary
+
+###PREPROCESS###
+#remove punctuations
+corpusSum <- tm_map(corpusSum, removePunctuation)
+#and numbers
+corpusSum <- tm_map(corpusSum, removeNumbers)
+#and transform the comments to lowercase (we don't want the destinction between lower and upper case strings)
+corpusSum <- tm_map(corpusSum, tolower)
+#remove english stopwords without analytic value e.g. and, such, as, so,...
+corpusSum <- tm_map(corpusSum, removeWords, stopwords("english"))
+#Strip additional spaces that might occur and seqeunces such as new line "\n"" 
+corpusSum <- tm_map(corpusSum, stripWhitespace)
+#stemming makes data denser, thus reducing the amount of data required for adequate training
+corpusSum <- tm_map(corpusSum, stemDocument)
+#Converting reviews it in to plain text
+corpusSum <- tm_map(corpusSum, PlainTextDocument)
+
+
+ 
+#Write the files on disk
+# 
+library(stringr) #for the line bellow
+ids <- str_pad(1:length(corpusSum), 4, pad = "0")
+writeCorpus(x = corpusSum
+            ,path = "C:/Users/Lara/Documents/Faks201617/MachineLearn/Assignments/Final/Rep/data"
+            ,filenames = sapply(ids, function(i) paste0(i,".txt"), USE.NAMES = F))
+
+```
+
+
+
 
 <font color="red">
 **IDEA 1:**  
