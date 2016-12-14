@@ -76,7 +76,7 @@ setwd("C:/Users/Lara/Documents/Faks201617/MachineLearn/Assignments/Final/Rep")
 ```
 
 
-Since the data described above didn't include any text data, we scraped IMDB page to get summaries of the movie plots in our data set. Since our data set includes the weblink of each movie, the scraping was fairly easy. With the use of regular expressions, the ID of the movie was taken form the link as to create a link to the summary page. Then, summary of the plot can be aquired usint the appropriate xpath.
+Since the data described above didn't include any text data, we scraped IMDB page to get summaries of the movie plots in our data set. Since our data set includes the weblink of each movie, the scraping was fairly easy. With the use of regular expressions, the ID of the movie was taken form the link as to create a link to the summary page. Then, summary of the plot can be aquired usint the appropriate xpath. If there was no summary to scrape, the movie was removed from the database. We were left with 4689 cases.
 
 ```{r, message=FALSE}
 #import data
@@ -86,9 +86,7 @@ library(rvest)   #html extraction
 library(pryr)
 ```
 ```{r, eval=F}
-
-
-#SCRAPE 
+#### SCRAPING SUMMARY ####
 summary <- sapply(X=dataTrain$movie_imdb_link, function(weblink){
   #Extract the title and number
   title <- str_extract(pattern = "/title/tt[0-9]*/",string=weblink)
@@ -99,8 +97,12 @@ summary <- sapply(X=dataTrain$movie_imdb_link, function(weblink){
   return(html_text(summaryNode))
 })
 
-summaryVec <- sapply(summary,FUN = function(t){if(length(t)==0){""}else{t}})
+summaryVec <- sapply(summary,FUN = function(t){if(length(t)==0){NA}else{t}})
+sum(sapply(summaryVec,is.na))
+rm(summary)
 dataTrain$summary <- summaryVec
+dataTrain <- dataTrain[!sapply(summaryVec,is.na),]
+
 
 #write on disc
 write.csv(x=dataTrain, file="movie_metadata_summary.csv", row.names = FALSE)
