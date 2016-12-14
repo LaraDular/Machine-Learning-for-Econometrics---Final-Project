@@ -104,6 +104,34 @@ model2 <- word2vec(train_file="sum1160.txt", output_file="vec1160.bin",read_voca
 #Then we train word2vec on all of the files with the aqcuired vocab
 setwd("C:/Users/Lara/Documents/Faks201617/MachineLearn/Assignments/Final/Rep") 
 
+####LDA#####
+library(topicmodels)
+library(LDAvis)
+library(dplyr)
+library(stringi)
+library(slam)
+library(ggplot2)
+library(servr)
+#create a DTM
+dtm<-DocumentTermMatrix(corpusSum, control=list(minWordLength=3))
 
+#Apply the tf-idf transformation to remove very rare and very frequent terms.
+term_tfidf<-tapply(dtm$v/row_sums(dtm)[dtm$i], dtm$j,mean) * log2(nDocs(dtm)/col_sums(dtm>0))
 
+qplot(term_tfidf, geom="histogram")
+summary(term_tfidf)
+#Remove terms with tf-idf less than 0.12. The new summary for the word frequencies is now
+dtm<-dtm[, term_tfidf >= 0.12]
+dtm<-dtm[row_sums(dtm)>0,]
+summary(col_sums(dtm))
 
+#Topic Extraction
+### Set the number of topics
+k <- 100
+SEED <- 2458
+
+joop_TM <-list(VEM = LDA(dtm, k = k, control = list(seed = SEED))
+               ,Gibbs = LDA(dtm, k = k, method = "Gibbs"
+                            ,control = list(seed = SEED, burnin = 1000
+                                            ,thin = 100, iter = 10000))
+               ,VEM_fixed = LDA(dtm, k=k, control=list(seed=SEED, estimate.alpha=FALSE)))
