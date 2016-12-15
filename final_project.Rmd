@@ -68,6 +68,40 @@ where $\mathbf{W}'_{(\cdot,j)} = \mathbf{v}'_{w_j}$.
 
 #2. LDA
 
+Whilst Word2Vec is local in the sense that one word predicts a nearby word, LDA is global where documents globally predict words. The goal is to extract short descriptions, or *topics*, of a collection of text that will allow us to efficiently process large collections, yet still preserve the essential statistical relationships useful for basic tasks such as classification.
+
+LDA is a generative probabilistic model of a corpus, in which documents are represented as random mixtures over latent ("hidden") topics, where each topic is characterised by a distribution over a fixed vocabulary of words. Terms are defined in the following manner:
+
+- A *word* is the basic unit of discrete data, defined to be an item from a vocabulary indexed by $\{1,\ldots,V\}$. Words are represented using unit-basis vectors that have a single component equal to one, and all other components equal to zero. Therefore, with superscripts denoting components, the $v$th word in the vocabulary is represented by a $V$-vector $w$ such that $w^v=1$ and $w^u=0$ for $u\neq v$.
+- A *document* is a sequence of $N$ words denoted by $\mathbf{w} = (w_1,w_2,\ldots,w_N)$, where $w_n$ is the $n$th word in the sequence. 
+- A *corpus* is a collection of $M$ documents denoted by $D=\{\mathbf{w_1,w_2,\ldots,w_M}\}$.
+
+The following three step generative process for each document $\mathbb{w}$ in a corpus $\mathbb{D}$ is assumed:
+
+1. Choose ${N} \sim Poisson(\zeta)$. 
+
+2. Choose ${\theta} \sim Dir(\alpha)$.
+
+3. For each of the ${N}$ words, ${w_n}$:
+
+    a. Choose a topic ${z_n} \sim Multinomial(\theta)$.
+    
+    b. Choose a word $w_n$ from $p(w_n|z_n,\beta)$, a multinomial probability conditioned on the topic $z_n$. 
+    
+In the first step, the number of words, ${N}$, the document will have is chosen according to some distribution, *e.g.* Poisson. In the second step, a topic mixture for the document is chosen according to a Dirichlet distribution over a fixed set of $K$ topics. The Dirichlet distribution is used because it is conjugate to the multinomial distribution, and, given a multinomial observation, the posterior distribution of $\theta$ is a Dirichlet of the form:
+
+$$
+p(\theta|\mathbf{\vec{\alpha}})=\frac{\Gamma(\sum_i\alpha_i)}{\prod_i\Gamma(\alpha_i)}\prod_i\theta_i^{\alpha_i-1}    
+$$
+where the Dirichlet parameter $\alpha$ controls the mean shape and sparsity of $\theta$. In the third step, each word $w_i$ is generated in the document by (a) picking a topic that has a certain probability according to the multinomial distribution that was sampled, and (b) using the topic to generate the word itself according to the topic's multinomial distribution. 
+
+This generative model is assumed for a corpus, and then LDA tries to backtrack from the documents to find a set of topics that are likely to have generated the collection. In order for LDA to learn the topic representation of each document and the words associated with each topic, we require approximate posterior inference of the per-document posterior, which takes the form:
+\frac{p(\theta|\alpha\prod_{n=1}^N p())}
+
+$$
+\frac{p(\theta|\alpha)\prod_{n=1}^Np(z_n|\theta)p(w_n|z_n,\beta_{1:K})}{\int_\theta p(\theta|\alpha)\prod_{n=1}^N\sum_{z=1}^Kp(z_n|\theta)p(w_n|z_n,\beta_{1:K})}
+$$
+where $\theta$ captures the per-document topic proportions, $\alpha$ is the previously mentioned Dirichlet parameter, $z_n$ represents the per-word topic assignment, $w_n$ is the observed word, and $\beta_{1:K}$ denotes the topics. Algorithms that may be used to approximate include mean field variational metods, expectation propagation, collapsed Gibbs sampling, or collapsed variational inference. Gibbs sampling is typically the easiest to implement, whilst variational inference can be faster. 
 
 #3. Experiments
 ##3.1. Acquiring data with web scraping
